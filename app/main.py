@@ -60,15 +60,24 @@ def classify(data: SensorData):
     }
 
     latest_prediction = {
-        "severity": int(prediction),
-        "label": labels[int(prediction)],
-        "confidence": round(confidence * 100, 2),
-        "recommendation": recommendations[int(prediction)],
-        "timestamp": datetime.now().isoformat()
+        "sensor": {
+            "aX": data.aX,
+            "aY": data.aY,
+            "aZ": data.aZ,
+            "gX": data.gX,
+            "gY": data.gY,
+            "gZ": data.gZ
+        },
+        "prediction": {
+            "severity": int(prediction),
+            "label": labels[int(prediction)],
+            "confidence": round(confidence * 100, 2),
+            "recommendation": recommendations[int(prediction)],
+            "timestamp": datetime.now().isoformat()
+        }
     }
 
     return latest_prediction
-
 
 @app.get("/latest")
 def latest():
