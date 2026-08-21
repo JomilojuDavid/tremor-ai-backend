@@ -50,7 +50,7 @@ def classify(data: SensorData):
     labels = {
         0: "No Tremor",
         1: "Mild Tremor",
-        2: "Moderate Tremor"
+        2: "Severe Tremor"
     }
 
     recommendations = {
