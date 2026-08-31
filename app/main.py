@@ -14,7 +14,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://cautious-acorn-x9rjrgpxj7xcj97-5173.app.github.dev"
+        "https://cautious-acorn-x9rjrgpxj7xcj97-5173.app.github.dev",
         "https://tremor-glove-dashboard.vercel.app"
     ],
     allow_credentials=True,
@@ -23,6 +23,7 @@ app.add_middleware(
 )
 
 latest_prediction = {}
+
 
 @app.get("/")
 def home():
@@ -79,6 +80,7 @@ def classify(data: SensorData):
     }
 
     return latest_prediction
+
 
 @app.get("/latest")
 def latest():
