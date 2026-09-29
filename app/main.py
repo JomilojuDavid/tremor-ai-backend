@@ -84,4 +84,24 @@ def classify(data: SensorData):
 
 @app.get("/latest")
 def latest():
+    if not latest_prediction:
+        return {}
+
+    timestamp = latest_prediction.get("prediction", {}).get("timestamp")
+
+    if not timestamp:
+        return {}
+
+    try:
+        last_update = datetime.fromisoformat(timestamp)
+        elapsed = (datetime.now() - last_update).total_seconds()
+
+        # If no new sensor data has arrived for 5 seconds,
+        # consider the device offline / waiting for data.
+        if elapsed > 5:
+            return {}
+
+    except Exception:
+        return {}
+
     return latest_prediction
