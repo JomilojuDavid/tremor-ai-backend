@@ -1,9 +1,15 @@
+import logging
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
 from app.schemas import SensorData
 from app.predictor import predict
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Tremor AI Backend",
@@ -79,29 +85,55 @@ def classify(data: SensorData):
         }
     }
 
+    stored_prediction = latest_prediction["prediction"]
+    logger.info(
+        "current_timestamp=%s pid=%s PREDICT RECEIVED sensor=%s "
+        "prediction_label=%s prediction_confidence=%s "
+        "stored_prediction_timestamp=%s",
+        datetime.now().isoformat(),
+        os.getpid(),
+        latest_prediction["sensor"],
+        stored_prediction["label"],
+        stored_prediction["confidence"],
+        stored_prediction["timestamp"],
+    )
+
     return latest_prediction
 
 
 @app.get("/latest")
 def latest():
-    if not latest_prediction:
-        return {}
-
-    timestamp = latest_prediction.get("prediction", {}).get("timestamp")
-
-    if not timestamp:
-        return {}
+    latest_prediction_empty = not latest_prediction
+    timestamp = None
+    elapsed = None
+    returning_prediction = False
 
     try:
-        last_update = datetime.fromisoformat(timestamp)
-        elapsed = (datetime.now() - last_update).total_seconds()
+        if not latest_prediction_empty:
+            timestamp = latest_prediction.get("prediction", {}).get("timestamp")
 
-        # If no new sensor data has arrived for 5 seconds,
-        # consider the device offline / waiting for data.
-        if elapsed > 5:
-            return {}
+            if timestamp:
+                try:
+                    last_update = datetime.fromisoformat(timestamp)
+                    elapsed = (datetime.now() - last_update).total_seconds()
 
-    except Exception:
-        return {}
+                    # If no new sensor data has arrived for 5 seconds,
+                    # consider the device offline / waiting for data.
+                    returning_prediction = elapsed <= 5
 
-    return latest_prediction
+                except Exception:
+                    pass
+    finally:
+        logger.info(
+            "current_timestamp=%s pid=%s latest_prediction_empty=%s "
+            "stored_prediction_timestamp=%s elapsed_seconds=%s "
+            "returning=%s",
+            datetime.now().isoformat(),
+            os.getpid(),
+            latest_prediction_empty,
+            timestamp,
+            round(elapsed, 3) if elapsed is not None else None,
+            "latest_prediction" if returning_prediction else "{}",
+        )
+
+    return latest_prediction if returning_prediction else {}
