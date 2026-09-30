@@ -1,3 +1,5 @@
+import pandas as pd
+
 from app.mode import model
 
 
